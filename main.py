@@ -1,4 +1,4 @@
-import time, re
+import time, re, tweepy, json, datetime
 from slackclient import SlackClient
 from config import *
 
@@ -6,6 +6,7 @@ sc = SlackClient(SLACK_BOT_TOKEN)
 sc_id = None
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 delay = 1
+LOCATION_ID = 1187115
 
 
 def read_command(slack_events):
@@ -29,7 +30,7 @@ def handle_command(command, channel):
     default_response = "I don't know what you mean"
     response = None
     if command.startswith('post'):
-        response = "twitter response"
+        response = trending(channel)
 
     sc.api_call(
         "chat.postMessage",
@@ -38,6 +39,35 @@ def handle_command(command, channel):
     )
 
 
+def trending(channel='assignment1'):
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    twitter = tweepy.API(auth)
+    now = datetime.datetime.now()
+    top10 = []
+
+    """ get trend and put it in a list """
+    trends = json.loads(json.dumps(twitter.trends_place(LOCATION_ID), indent=1))
+    opening_response = 'Here are the Top Trending now (%s %d, %d)' % (now.strftime('%B'), now.day, now.year)
+    sc.api_call(
+        "chat.postMessage",
+        channel=channel,
+        text=opening_response
+    )
+
+    count = 0
+
+    for trend in trends[0]['trends']:
+        if count < 10:
+            top10.append("%d) %s" % (count + 1, trend["name"]))
+            count += 1
+        else:
+            break
+
+    return ' \n'.join(top10)
+
+
+""" main function of the slackbot script"""
 if __name__ == '__main__':
     if sc.rtm_connect(with_team_state=False):
         print "SLACK BOT is now online"
@@ -46,6 +76,7 @@ if __name__ == '__main__':
             command, channel = read_command(sc.rtm_read())
             if command:
                 handle_command(command, channel)
+            elif
             time.sleep(delay)
     else:
         print "Failed Connection"
