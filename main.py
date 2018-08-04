@@ -48,7 +48,12 @@ def trending(channel='assignment1', isauto=True):
 
     """ get trend and put it in a list """
     trends = json.loads(json.dumps(twitter.trends_place(LOCATION_ID), indent=1))
-    opening_response = 'Here are the Top Trending now (%s %d, %d)' % (now.strftime('%B'), now.day, now.year)
+    opening_response = 'Here are the Top Trending today (%s %d, %d) as of %s %s %s' % (now.strftime('%B'),
+                                                                                       now.day,
+                                                                                       now.year, 
+                                                                                       now.strftime('%H'),
+                                                                                       now.strftime('%M'),
+                                                                                       now.strftime('%p'))
     sc.api_call(
         "chat.postMessage",
         channel=channel,
