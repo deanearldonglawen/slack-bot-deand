@@ -1,11 +1,10 @@
-import time, re, tweepy, json, datetime
+import time, re, tweepy, json, datetime, schedule
 from slackclient import SlackClient
 from config import *
 
 sc = SlackClient(SLACK_BOT_TOKEN)
 sc_id = None
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
-delay = 1
 LOCATION_ID = 1187115
 
 
@@ -29,8 +28,9 @@ def handle_command(command, channel):
 
     default_response = "I don't know what you mean"
     response = None
+    isauto = False
     if command.startswith('post'):
-        response = trending(channel)
+        response = trending(channel, isauto)
 
     sc.api_call(
         "chat.postMessage",
@@ -39,7 +39,7 @@ def handle_command(command, channel):
     )
 
 
-def trending(channel='assignment1'):
+def trending(channel='assignment1', isauto=True):
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     twitter = tweepy.API(auth)
@@ -56,7 +56,6 @@ def trending(channel='assignment1'):
     )
 
     count = 0
-
     for trend in trends[0]['trends']:
         if count < 10:
             top10.append("%d) %s" % (count + 1, trend["name"]))
@@ -64,7 +63,20 @@ def trending(channel='assignment1'):
         else:
             break
 
-    return ' \n'.join(top10)
+    if isauto:
+        response = ' \n'.join(top10)
+        sc.api_call(
+            "chat.postMessage",
+            channel=channel,
+            text=response
+        )
+
+    else:
+        return ' \n'.join(top10)
+
+
+def delay(delay=1):
+    return time.sleep(delay)
 
 
 """ main function of the slackbot script"""
@@ -72,12 +84,16 @@ if __name__ == '__main__':
     if sc.rtm_connect(with_team_state=False):
         print "SLACK BOT is now online"
         sc_id = sc.api_call("auth.test")["user_id"]
+        schedule.every().day.at('10:30').do(trending)
+        # schedule.every().hour.do(trending)
+        # schedule.every().minute.do(trending)
         while True:
+            schedule.run_pending()
+            delay()
             command, channel = read_command(sc.rtm_read())
             if command:
                 handle_command(command, channel)
-            elif
-            time.sleep(delay)
+            delay()
     else:
         print "Failed Connection"
 
