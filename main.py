@@ -51,7 +51,7 @@ def trending(channel='assignment1', isauto=True):
     opening_response = 'Here are the Top Trending today (%s %d, %d) as of %s %s %s' % (now.strftime('%B'),
                                                                                        now.day,
                                                                                        now.year, 
-                                                                                       now.strftime('%H'),
+                                                                                       now.strftime('%I'),
                                                                                        now.strftime('%M'),
                                                                                        now.strftime('%p'))
     sc.api_call(
@@ -89,9 +89,7 @@ if __name__ == '__main__':
     if sc.rtm_connect(with_team_state=False):
         print "SLACK BOT is now online"
         sc_id = sc.api_call("auth.test")["user_id"]
-        schedule.every().day.at('10:30').do(trending)
-        # schedule.every().hour.do(trending)
-        # schedule.every().minute.do(trending)
+        schedule.every().day.at('10:30').do(trending)   
         while True:
             schedule.run_pending()
             delay()
