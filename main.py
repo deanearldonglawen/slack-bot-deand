@@ -87,7 +87,8 @@ if __name__ == '__main__':
     if sc.rtm_connect(with_team_state=False):
         print "SLACK BOT is now online"
         sc_id = sc.api_call("auth.test")["user_id"]
-        schedule.every().day.at('10:30').do(trending)   
+        schedule.every().day.at('10:30').do(trending)
+        schedule.every(10).minutes.do(trending)
         while True:
             schedule.run_pending()
             delay()
