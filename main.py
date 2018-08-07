@@ -5,7 +5,6 @@ from config import *
 sc = SlackClient(SLACK_BOT_TOKEN)
 sc_id = None
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
-LOCATION_ID = 1187115
 
 
 def read_command(slack_events):
@@ -44,11 +43,18 @@ def trending(channel='assignment1', isauto=True):
     auth.set_access_token(access_token, access_token_secret)
     twitter = tweepy.API(auth)
     now = datetime.datetime.now()
-    top10 = []
 
     """ get trend and put it in a list """
-    trends = json.loads(json.dumps(twitter.trends_place(LOCATION_ID), indent=1))
-    opening_response = 'Here are the Top Trending today (%s %d, %d) as of %s %s %s' % (now.strftime('%B'),
+    trends = json.loads(json.dumps(twitter.trends_place(1), indent=4))
+
+    listed = {}
+    for item in trends[0]['trends']:
+        listed[item['tweet_volume']] = item['name']
+
+    sorted_list = [ value for (key, value) in sorted(listed.items(), reverse=True)]
+    top10 = sorted_list[:10]
+
+    opening_response = 'Here are the Top Trending today (%s %d, %d) as of %s:%s %s' % (now.strftime('%B'),
                                                                                        now.day,
                                                                                        now.year, 
                                                                                        now.strftime('%I'),
@@ -60,14 +66,6 @@ def trending(channel='assignment1', isauto=True):
         text=opening_response
     )
 
-    count = 0
-    for trend in trends[0]['trends']:
-        if count < 10:
-            top10.append("%d) %s" % (count + 1, trend["name"]))
-            count += 1
-        else:
-            break
-
     if isauto:
         response = ' \n'.join(top10)
         sc.api_call(
@@ -77,7 +75,7 @@ def trending(channel='assignment1', isauto=True):
         )
 
     else:
-        return ' \n'.join(top10)
+        return '\n'.join(top10)
 
 
 def delay(delay=1):
